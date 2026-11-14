@@ -11,15 +11,21 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "nuxt preview",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "capture": "tsx scripts/capture-fixture.ts"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.147",
     "@iconify-json/simple-icons": "^1.2.100",
     "@libsql/client": "^0.18.0",
     "@nuxt/ui": "^4.12.0",
+    "cheerio": "^1.2.0",
+    "croner": "^11.0.0",
     "drizzle-orm": "^0.45.4",
+    "got-scraping": "^4.2.2",
     "nuxt": "^4.6.3",
+    "p-limit": "^7.3.3",
+    "p-retry": "^9.0.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.7"
   },
