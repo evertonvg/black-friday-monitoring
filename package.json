@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "preview": "nuxt preview",
     "db:generate": "drizzle-kit generate",
-    "capture": "tsx scripts/capture-fixture.ts"
+    "capture": "tsx scripts/capture-fixture.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.147",
@@ -24,6 +25,7 @@
     "drizzle-orm": "^0.45.4",
     "got-scraping": "^4.2.2",
     "nuxt": "^4.6.3",
+    "nuxt-auth-utils": "^0.6.2",
     "p-limit": "^7.3.3",
     "p-retry": "^9.0.0",
     "tailwindcss": "^4.3.3",
