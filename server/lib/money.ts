@@ -24,3 +24,10 @@ export function parseBRL(text: string): number | null {
 export function formatBRL(cents: number): string {
   return formatter.format(cents / 100)
 }
+
+/** Converte reais (número, ex.: 3894.19) em centavos; zero, negativo ou inválido → null. */
+export function reaisToCents(value: unknown): number | null {
+  const n = typeof value === 'string' ? Number(value) : value
+  if (typeof n !== 'number' || !Number.isFinite(n) || n <= 0) return null
+  return Math.round(n * 100)
+}

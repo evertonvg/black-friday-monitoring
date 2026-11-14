@@ -1,7 +1,8 @@
 import { UnsupportedStoreError } from './errors'
+import { kabum } from './kabum'
 import type { StoreAdapter, StoreId } from './types'
 
-const defaultAdapters: StoreAdapter[] = []
+const defaultAdapters: StoreAdapter[] = [kabum]
 
 let adapters: StoreAdapter[] = [...defaultAdapters]
 
