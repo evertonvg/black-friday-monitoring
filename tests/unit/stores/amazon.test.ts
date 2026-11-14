@@ -31,6 +31,10 @@ describe('amazon parseSearch', () => {
   it('captcha na busca → BlockedError', () => {
     expect(() => parseSearch(fixture('captcha'))).toThrow(BlockedError)
   })
+
+  it('desafio anti-bot (interstitial) na busca → BlockedError', () => {
+    expect(() => parseSearch(fixture('interstitial'))).toThrow(BlockedError)
+  })
 })
 
 describe('amazon parseListing', () => {
@@ -60,6 +64,10 @@ describe('amazon parseListing', () => {
 
   it('captcha na página do produto → BlockedError', () => {
     expect(() => parseListing(fixture('captcha'))).toThrow(BlockedError)
+  })
+
+  it('desafio anti-bot (interstitial) na página do produto → BlockedError', () => {
+    expect(() => parseListing(fixture('interstitial'))).toThrow(BlockedError)
   })
 
   it('página sem dados de produto lança erro', () => {

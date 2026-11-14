@@ -18,7 +18,7 @@ defineProps<{ rows: StoreRow[] }>()
 
 const installmentText = (row: StoreRow) =>
   row.installmentPriceCents && row.installmentCount
-    ? `${row.installmentCount}x de ${formatBRL(Math.round(row.installmentPriceCents / row.installmentCount))} (${formatBRL(row.installmentPriceCents)})`
+    ? `${formatBRL(row.installmentPriceCents)} em até ${row.installmentCount}x`
     : row.installmentPriceCents ? formatBRL(row.installmentPriceCents) : '—'
 </script>
 

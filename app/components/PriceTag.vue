@@ -11,7 +11,7 @@ const mode = usePriceMode()
 const main = computed(() => (mode.value === 'cash' ? props.cash : props.installment))
 const detail = computed(() => {
   if (mode.value === 'installment' && props.installment && props.installmentCount) {
-    return `${props.installmentCount}x de ${formatBRL(Math.round(props.installment / props.installmentCount))}`
+    return `em até ${props.installmentCount}x`
   }
   if (mode.value === 'cash' && props.installment && props.installment !== props.cash) {
     return `ou ${formatBRL(props.installment)} a prazo`

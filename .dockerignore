@@ -1,0 +1,13 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+data
+.env
+.env.*
+!.env.example
+.git
+.superpowers
+tests/fixtures

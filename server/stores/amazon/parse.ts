@@ -5,7 +5,10 @@ import type { ListingPage, SearchResult } from '../types'
 import { productUrl } from './url'
 
 function load(html: string): cheerio.CheerioAPI {
-  if (/\/errors\/validateCaptcha|Digite os caracteres/i.test(html)) throw new BlockedError()
+  // Captcha clássico ou desafio anti-bot "interstitial" (bm-verify): a loja bloqueou o acesso.
+  if (/\/errors\/validateCaptcha|Digite os caracteres|triggerInterstitialChallenge|bm-verify/i.test(html)) {
+    throw new BlockedError()
+  }
   return cheerio.load(html)
 }
 

@@ -13,7 +13,8 @@
     "preview": "nuxt preview",
     "db:generate": "drizzle-kit generate",
     "capture": "tsx scripts/capture-fixture.ts",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "check:stores": "tsx scripts/check-stores.ts"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.147",
