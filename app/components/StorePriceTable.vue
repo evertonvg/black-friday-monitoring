@@ -12,6 +12,7 @@ interface StoreRow {
   freeShipping: boolean
   capturedAt: string | null
   lastError: string | null
+  fresh: boolean
 }
 
 defineProps<{ rows: StoreRow[] }>()
@@ -68,6 +69,9 @@ const installmentText = (row: StoreRow) =>
               </UBadge>
               <UBadge v-else color="success" variant="subtle">
                 Disponível
+              </UBadge>
+              <UBadge v-if="row.status !== 'error' && row.capturedAt && !row.fresh" color="warning" variant="subtle">
+                Desatualizado
               </UBadge>
               <UBadge v-if="row.available && row.freeShipping" color="info" variant="subtle">
                 Frete grátis

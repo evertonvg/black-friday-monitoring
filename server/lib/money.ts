@@ -1,4 +1,5 @@
-const NUMBER = /\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?/
+// Com separador de milhar ("1.299,90") ou sem ("1299,90"); o (?!\d) impede casar só um prefixo.
+const NUMBER = /\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?(?!\d)|\d+(?:,\d{1,2})?/
 
 const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 

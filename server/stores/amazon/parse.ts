@@ -46,7 +46,9 @@ export function parseListing(html: string): ListingPage {
     ?? parseBRL($('#apex_desktop .a-price:not(.a-text-price) .a-offscreen').first().text())
   const availabilityText = clean($('#availability').text())
   const unavailable = /não disponível|indisponível/i.test(availabilityText)
-  const available = !unavailable && cash !== null
+  // Sem preço e sem aviso de indisponível: o layout mudou. É erro, não "esgotado".
+  if (!unavailable && cash === null) throw new Error('Preço não encontrado na página da Amazon')
+  const available = !unavailable
 
   // "Em até 12x de R$ 202,60 sem juros (total parcelado R$ 2.429,99)"
   const installmentText = clean($('#installmentCalculatorCentral_feature_div, #installmentCalculator_feature_div').text())

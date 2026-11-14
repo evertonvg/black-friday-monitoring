@@ -106,6 +106,9 @@ const chartTarget = computed(() =>
             <p v-else-if="detail.state === 'soldout'" class="text-lg">
               Esgotado em todas as lojas
             </p>
+            <p v-else-if="detail.state === 'stale'" class="text-lg">
+              Sem preço atual — veja os erros na tabela abaixo
+            </p>
             <template v-else-if="detail.best">
               <PriceTag
                 size="lg"

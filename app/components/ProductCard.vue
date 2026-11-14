@@ -4,7 +4,7 @@ defineProps<{
     id: number
     name: string
     imageUrl: string | null
-    state: 'pending' | 'soldout' | 'ok'
+    state: 'pending' | 'soldout' | 'stale' | 'ok'
     change7dPercent: number | null
     onTarget: boolean
     hasError: boolean
@@ -50,6 +50,9 @@ defineProps<{
           </p>
           <p v-else-if="product.state === 'soldout'" class="text-muted text-sm">
             Esgotado em todas as lojas
+          </p>
+          <p v-else-if="product.state === 'stale'" class="text-muted text-sm">
+            Sem preço atual (coleta com erro ou desatualizada)
           </p>
           <template v-else-if="product.best">
             <PriceTag

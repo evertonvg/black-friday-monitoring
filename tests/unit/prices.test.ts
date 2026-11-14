@@ -20,6 +20,7 @@ function storePrice(values: Partial<StorePrice>): StorePrice {
     freeShipping: false,
     capturedAt: NOW,
     lastError: null,
+    fresh: true,
     ...values
   }
 }
@@ -35,6 +36,8 @@ describe('pickBest', () => {
   it('ignora preço nulo no modo', () =>
     expect(pickBest([{ ...a, cashPriceCents: null }, b], 'cash')).toBe(b))
   it('lista vazia → null', () => expect(pickBest([], 'cash')).toBeNull())
+  it('ignora preço que não é atual', () =>
+    expect(pickBest([{ ...a, fresh: false }, b], 'cash')).toBe(b))
   it('empate → o mais recente', () => {
     const older = storePrice({ listingId: 3, cashPriceCents: 90000, capturedAt: daysAgo(1) })
     expect(pickBest([older, a], 'cash')).toBe(a)
@@ -111,6 +114,48 @@ describe('listSummaries', () => {
     await addListing(db, p.id, { status: 'error', lastError: 'Bloqueado pela loja' })
     const [summary] = await listSummaries(db, 'cash', NOW)
     expect(summary!.hasError).toBe(true)
+  })
+
+  it('anúncio com erro não entra no melhor preço, mesmo com snapshot recente', async () => {
+    const db = await testDb()
+    const p = await addProduct(db)
+    const blocked = await addListing(db, p.id, { status: 'error', lastError: 'Bloqueado pela loja' })
+    const ok = await addListing(db, p.id, { status: 'ok' })
+    await addSnapshot(db, blocked.id, { cashPriceCents: 80000, capturedAt: new Date(NOW.getTime() - 60 * 60 * 1000) })
+    await addSnapshot(db, ok.id, { cashPriceCents: 90000, capturedAt: NOW })
+    const [summary] = await listSummaries(db, 'cash', NOW)
+    expect(summary!.best!.listingId).toBe(ok.id)
+  })
+
+  it('snapshot com mais de 24 h não entra no melhor preço nem no alvo', async () => {
+    const db = await testDb()
+    const p = await addProduct(db, { targetPriceCents: 85000, targetMode: 'cash' })
+    const old = await addListing(db, p.id, { status: 'ok' })
+    const recent = await addListing(db, p.id, { status: 'ok' })
+    await addSnapshot(db, old.id, { cashPriceCents: 80000, capturedAt: daysAgo(2) })
+    await addSnapshot(db, recent.id, { cashPriceCents: 90000, capturedAt: NOW })
+    const [summary] = await listSummaries(db, 'cash', NOW)
+    expect(summary!.best!.listingId).toBe(recent.id)
+    expect(summary!.onTarget).toBe(false)
+  })
+
+  it('só preços desatualizados ou com erro → stale, best null', async () => {
+    const db = await testDb()
+    const p = await addProduct(db)
+    const l = await addListing(db, p.id, { status: 'error', lastError: 'Bloqueado pela loja' })
+    await addSnapshot(db, l.id, { capturedAt: daysAgo(3) })
+    const [summary] = await listSummaries(db, 'cash', NOW)
+    expect(summary).toMatchObject({ state: 'stale', best: null })
+  })
+
+  it('uma loja esgotada e outra bloqueada não é "esgotado em todas"', async () => {
+    const db = await testDb()
+    const p = await addProduct(db)
+    await addListing(db, p.id, { status: 'error', lastError: 'Bloqueado pela loja' })
+    const soldout = await addListing(db, p.id, { status: 'unavailable' })
+    await addSnapshot(db, soldout.id, { available: false, cashPriceCents: null, installmentPriceCents: null, installmentCount: null, capturedAt: NOW })
+    const [summary] = await listSummaries(db, 'cash', NOW)
+    expect(summary).toMatchObject({ state: 'stale', best: null })
   })
 
   it('não inclui arquivados', async () => {

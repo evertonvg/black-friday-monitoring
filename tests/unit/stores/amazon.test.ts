@@ -73,6 +73,11 @@ describe('amazon parseListing', () => {
   it('página sem dados de produto lança erro', () => {
     expect(() => parseListing('<html><body>nada aqui</body></html>')).toThrow()
   })
+
+  it('título sem preço e sem aviso de indisponível → erro (layout mudou), não esgotado', () => {
+    const html = '<html><body><span id="productTitle">TV</span><div id="availability">Em estoque</div></body></html>'
+    expect(() => parseListing(html)).toThrow('Preço não encontrado na página da Amazon')
+  })
 })
 
 describe('amazon url', () => {

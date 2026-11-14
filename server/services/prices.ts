@@ -16,13 +16,15 @@ export interface StorePrice {
   freeShipping: boolean
   capturedAt: Date | null
   lastError: string | null
+  /** Preço atual: anúncio sem erro e snapshot com até 24 h. Só preços atuais contam como "melhor". */
+  fresh: boolean
 }
 
 export interface ProductSummary {
   id: number
   name: string
   imageUrl: string | null
-  state: 'pending' | 'soldout' | 'ok'
+  state: 'pending' | 'soldout' | 'stale' | 'ok'
   best: StorePrice | null
   change7dPercent: number | null
   onTarget: boolean
@@ -46,6 +48,7 @@ export interface HistorySeries {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+const STALE_AFTER_MS = DAY_MS
 
 const priceIn = (p: { cashPriceCents: number | null, installmentPriceCents: number | null }, mode: PriceMode) =>
   mode === 'cash' ? p.cashPriceCents : p.installmentPriceCents
@@ -55,7 +58,7 @@ export function pickBest(prices: StorePrice[], mode: PriceMode): StorePrice | nu
   let best: StorePrice | null = null
   for (const candidate of prices) {
     const price = priceIn(candidate, mode)
-    if (!candidate.available || price === null) continue
+    if (!candidate.fresh || !candidate.available || price === null) continue
     const bestPrice = best ? priceIn(best, mode)! : Infinity
     const newer = (candidate.capturedAt?.getTime() ?? 0) > (best?.capturedAt?.getTime() ?? 0)
     if (price < bestPrice || (price === bestPrice && newer)) best = candidate
@@ -63,7 +66,7 @@ export function pickBest(prices: StorePrice[], mode: PriceMode): StorePrice | nu
   return best
 }
 
-function toStorePrice(listing: Listing, snapshot: PriceSnapshot | undefined): StorePrice {
+function toStorePrice(listing: Listing, snapshot: PriceSnapshot | undefined, now: Date): StorePrice {
   return {
     listingId: listing.id,
     store: listing.store as StoreId,
@@ -76,7 +79,8 @@ function toStorePrice(listing: Listing, snapshot: PriceSnapshot | undefined): St
     available: snapshot?.available ?? false,
     freeShipping: snapshot?.freeShipping ?? false,
     capturedAt: snapshot?.capturedAt ?? null,
-    lastError: listing.lastError
+    lastError: listing.lastError,
+    fresh: snapshot !== undefined && listing.status !== 'error' && now.getTime() - snapshot.capturedAt.getTime() <= STALE_AFTER_MS
   }
 }
 
@@ -99,11 +103,13 @@ async function loadProducts(db: Db, productIds: number[]) {
 
 function summarize(product: Product, productListings: Listing[], snapshots: PriceSnapshot[], mode: PriceMode, now: Date) {
   const current = latestPerListing(snapshots, now)
-  const past = latestPerListing(snapshots, new Date(now.getTime() - 7 * DAY_MS))
+  const weekAgo = new Date(now.getTime() - 7 * DAY_MS)
+  const past = latestPerListing(snapshots, weekAgo)
 
-  const stores = productListings.map(l => toStorePrice(l, current.get(l.id)))
+  const stores = productListings.map(l => toStorePrice(l, current.get(l.id), now))
   const best = pickBest(stores, mode)
-  const bestPast = pickBest(productListings.map(l => toStorePrice(l, past.get(l.id))), mode)
+  // Preço de 7 dias atrás: vale o snapshot daquela época (não depende do status atual do anúncio).
+  const bestPast = pickBest(productListings.map(l => ({ ...toStorePrice(l, past.get(l.id), weekAgo), fresh: past.has(l.id) })), mode)
   const bestPrice = best ? priceIn(best, mode) : null
   const price7dAgo = bestPast ? priceIn(bestPast, mode) : null
 
@@ -114,7 +120,7 @@ function summarize(product: Product, productListings: Listing[], snapshots: Pric
     id: product.id,
     name: product.name,
     imageUrl: product.imageUrl,
-    state: current.size === 0 ? 'pending' : best ? 'ok' : 'soldout',
+    state: stateOf(stores, best, current.size),
     best,
     change7dPercent: bestPrice !== null && price7dAgo !== null
       ? Math.round(((bestPrice - price7dAgo) / price7dAgo) * 1000) / 10
@@ -123,6 +129,13 @@ function summarize(product: Product, productListings: Listing[], snapshots: Pric
     hasError: productListings.some(l => l.status === 'error')
   }
   return { summary, stores, price7dAgo }
+}
+
+/** pending: nunca coletado; ok: há melhor preço; soldout: todas as lojas com preço atual e esgotadas; stale: falta preço atual. */
+function stateOf(stores: StorePrice[], best: StorePrice | null, collected: number): ProductSummary['state'] {
+  if (collected === 0) return 'pending'
+  if (best) return 'ok'
+  return stores.every(s => s.fresh && !s.available) ? 'soldout' : 'stale'
 }
 
 export async function listSummaries(db: Db, mode: PriceMode, now: Date = new Date()): Promise<ProductSummary[]> {
