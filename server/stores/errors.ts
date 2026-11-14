@@ -18,3 +18,10 @@ export class UnsupportedStoreError extends Error {
     this.name = 'UnsupportedStoreError'
   }
 }
+
+export class InvalidProductUrlError extends Error {
+  constructor(message = 'Esse link não é de uma página de produto') {
+    super(message)
+    this.name = 'InvalidProductUrlError'
+  }
+}

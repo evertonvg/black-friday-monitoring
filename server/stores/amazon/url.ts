@@ -1,4 +1,4 @@
-import { ShortLinkError } from '../errors'
+import { InvalidProductUrlError, ShortLinkError } from '../errors'
 
 const HOSTS = new Set(['amazon.com.br', 'www.amazon.com.br'])
 const SHORT_HOSTS = new Set(['amzn.to', 'a.co', 'amzn.com'])
@@ -27,6 +27,6 @@ export function normalizeUrl(url: string): string {
   const parsed = new URL(url)
   if (SHORT_HOSTS.has(parsed.hostname)) throw new ShortLinkError()
   const match = parsed.pathname.match(ASIN)
-  if (!match) throw new Error('Link da Amazon sem código do produto (ASIN)')
+  if (!match) throw new InvalidProductUrlError('Link da Amazon sem código do produto (ASIN)')
   return productUrl(match[1]!)
 }

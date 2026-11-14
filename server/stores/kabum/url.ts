@@ -1,3 +1,5 @@
+import { InvalidProductUrlError } from '../errors'
+
 const HOSTS = new Set(['kabum.com.br', 'www.kabum.com.br'])
 
 export function matches(url: string): boolean {
@@ -15,6 +17,6 @@ export function productUrl(code: number | string): string {
 /** https://www.kabum.com.br/produto/<id>, sem slug, query ou hash. */
 export function normalizeUrl(url: string): string {
   const match = new URL(url).pathname.match(/^\/produto\/(\d+)/)
-  if (!match) throw new Error('Link do KaBuM não é de um produto')
+  if (!match) throw new InvalidProductUrlError('Link do KaBuM não é de um produto')
   return productUrl(match[1]!)
 }
